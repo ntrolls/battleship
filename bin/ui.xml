@@ -9,7 +9,7 @@
 			</hbox>
 		</vbox>
 	</panel>
-	<panel constraints="BorderLayout.CENTER">
+	<panel width="200" constraints="BorderLayout.EAST">
 		<vbox>
 			<label text="Missiles Remaining"/>
 			<label text="30/30"/>
