@@ -124,14 +124,18 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		this.add(mainPanel, BorderLayout.CENTER);
 		this.setSize(640, 480);
 		this.setVisible(true);
-		
+	}
+	
+	public void start()
+	{	
 		initialiseData();
 		updateDisplay();
 		
-		JOptionPane.showMessageDialog(this,
+		JOptionPane.showMessageDialog(null,
 				"Missile Ready, Sir! Give me an order.",
 			    "Operator",
 			    JOptionPane.PLAIN_MESSAGE);
+		requestFocus();
 	}
 	
 	/**
