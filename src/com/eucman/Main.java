@@ -4,6 +4,7 @@
 package com.eucman;
 
 import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,7 +34,7 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 
 	private static final long serialVersionUID = 1L;
 	private AimCanvas aimCanvas;
-	private JPanel mainPanel;
+	private Container mainPanel;
 	private JPanel scorePanel;
 	private JLabel scoreLabel;
 	private JLabel totalLabel;
@@ -68,7 +69,9 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		this.setLayout(new BorderLayout());
 		
 		mainPanel = new JPanel();
+		mainPanel.setSize(420, 460);
 		mainPanel.setLayout(new BorderLayout());
+		
 		
 		aimCanvas = new AimCanvas();
 		aimCanvas.addLaunchEventLisneter(this);
@@ -119,10 +122,10 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		patrolButton.addActionListener(this);
 		leftPanel.add(patrolButton);
 		
-		mainPanel.add(leftPanel, BorderLayout.EAST);
-		
 		this.add(mainPanel, BorderLayout.CENTER);
-		this.setSize(640, 480);
+		this.add(leftPanel, BorderLayout.EAST);
+		this.setSize(620, 480);
+		
 		this.setVisible(true);
 	}
 	
@@ -145,12 +148,12 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 	{
 		mean = Double.parseDouble(getParameter("mean"));
 		sd = Double.parseDouble(getParameter("sd"));
-		enemy.setTo(rand.nextFloat() * 200.0f - 100.0f , rand.nextFloat() * 200.0f - 100.0f);
+//		enemy.setTo(rand.nextFloat() * 200.0f - 100.0f , rand.nextFloat() * 200.0f - 100.0f);
 	}
 
 	private void updateDisplay()
 	{
-		coordinateLabel.setText(String.format("X:%.02f Y:%.02f", current.get_x(), current.get_y()));
+//		coordinateLabel.setText(String.format("X:%.02f Y:%.02f", current.get_x(), current.get_y()));
 		scoreLabel.setText(String.format("Score: %d/100", currentScore));
 		totalLabel.setText(String.format("Total: %d", totalScore));
 		missileLabel.setText(String.format("%d/%d", missilesRemaining, maxMissiles));;
@@ -168,9 +171,6 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		if(action.getActionCommand().equals("new"))
 		{
 			aimCanvas.setTargeting(true);
-			aimCanvas.lastAim = null;
-			aimCanvas.setHasPatrolled(false);
-			
 			newCoordinateButton.setEnabled(false);
 			
 			JOptionPane.showMessageDialog(this,
@@ -189,10 +189,11 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		else if(action.getActionCommand().equals("keep"))
 		{
 			current.setTo(old);
-			updateDisplay();
-			aimCanvas.temp.setLocation(aimCanvas.convertToPoint(old));
+			aimCanvas.aim = new Coordinate();
+			aimCanvas.aim.setTo(aimCanvas.lastAim);
 			aimCanvas.repaint();
 			launchButton.setEnabled(true);
+			updateDisplay();
 			
 			JOptionPane.showMessageDialog(this,
 					"Coordinate kept: you can order missile launch",
@@ -235,6 +236,10 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		
 		// disable patrol button
 		patrolButton.setEnabled(false);
+		
+		// subtract score
+		totalScore -= 10;
+		updateDisplay();
 	}
 
 	private void launchMisile()
@@ -243,13 +248,15 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		old.setTo(current);
 		
 		// process launch
-		Coordinate error = new Coordinate(mean + sd * rand.nextGaussian(), mean + sd * rand.nextGaussian());
+		Coordinate error = new Coordinate((int)(mean + sd * rand.nextGaussian()), (int)(mean + sd * rand.nextGaussian()));
 		Coordinate landed = current.add(error);
 		this.aims.add(current);
 		this.errors.add(error);
 		
-		aimCanvas.lastAim = aimCanvas.convertToPoint(current);
-		aimCanvas.lastHit = aimCanvas.convertToPoint(landed);
+		aimCanvas.lastAim.setTo(current);
+		aimCanvas.lastHit.setTo(landed);
+		aimCanvas.aim = null;
+		aimCanvas.setHasPatrolled(false);
 		aimCanvas.repaint();
 		
 		missilesRemaining -= 1;
@@ -261,6 +268,13 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		{
 			JOptionPane.showMessageDialog(this,
 					"We have completely missed the target",
+				    "Operator",
+				    JOptionPane.PLAIN_MESSAGE);
+		}
+		else
+		{
+			JOptionPane.showMessageDialog(this,
+					"Smoke has been observed but we have no clear visual. Sending a patrol ship will give us a visual but you will lose 10 points.",
 				    "Operator",
 				    JOptionPane.PLAIN_MESSAGE);
 		}

@@ -5,8 +5,8 @@ package com.eucman.ui;
 
 import java.awt.Canvas;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -23,20 +23,24 @@ public class AimCanvas extends Canvas implements MouseMotionListener, MouseListe
 {
 	private static final long serialVersionUID = 1L;
 	private ArrayList<AimEventListener> _listeners = new ArrayList<AimEventListener>();
-	Coordinate aim = new Coordinate();
 	
-	public Point lastAim = new Point();
-	public Point lastHit = new Point();
+	
+	public Coordinate aim = new Coordinate(-1, -1);
+	public Coordinate lastAim = new Coordinate(-1, -1);
+	public Coordinate lastHit = new Coordinate(-1, -1);
+	public Coordinate temp = new Coordinate(-100, -100);
 	
 	private boolean isTargeting = false;
 	private boolean hasPatrolled = false;
-	public Point temp = new Point(-100, -100);
+	
 
 	public AimCanvas()
 	{
 		super();
 		
-		setSize(440, 440);
+		setSize(420, 420);
+		this.setPreferredSize(new Dimension(420, 420));
+		this.setMaximumSize(new Dimension(420, 420));
 		
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
@@ -47,11 +51,11 @@ public class AimCanvas extends Canvas implements MouseMotionListener, MouseListe
 		_listeners.add(listener);
 	}
 
-	public Point convertToPoint(Coordinate c)
+	public Coordinate convertToCoordinate(int _x, int _y)
 	{
-		int x = (int)((double)getWidth()  / 100.0 * (c.get_x() / 2.0 + 50.0));
-		int y = (int)((double)getHeight() / 100.0 * (c.get_y() / 2.0 + 50.0));
-		return new Point(x, y);
+		int row = _x / 22;
+		int col = _y / 22;
+		return new Coordinate(row, col);
 	}
 
 	public void fireAimEvent(AimEvent event)
@@ -83,14 +87,10 @@ public class AimCanvas extends Canvas implements MouseMotionListener, MouseListe
 	{
 		if(isTargeting())
 		{
-			if(temp == null)
-			{
-				temp = new Point(e.getX(), e.getY());
-			}
-			temp.x = e.getX();
-			temp.y = e.getY();
+			aim = convertToCoordinate(e.getY(), e.getX());
 			fireAimEvent(new AimEvent(this, this.aim));
 			this.isTargeting = false;
+			repaint();
 		}
 	}
 
@@ -120,12 +120,7 @@ public class AimCanvas extends Canvas implements MouseMotionListener, MouseListe
 	{
 		if(isTargeting())
 		{
-			temp.x = arg0.getX();
-			temp.y = arg0.getY();
-			
-			aim.set_x(((double)temp.x / (double)this.getWidth()  * 100.0 - 50.0) * 2.0);
-			aim.set_y(((double)temp.y / (double)this.getHeight() * 100.0 - 50.0) * 2.0);
-			
+			temp = convertToCoordinate(arg0.getY(), arg0.getX());
 			repaint();
 		}
 	}
@@ -148,20 +143,36 @@ public class AimCanvas extends Canvas implements MouseMotionListener, MouseListe
 		g.setColor(Color.BLUE);
 		g.fillRect(0, 0, getWidth(), getHeight());
 		
-		g.setColor(Color.GREEN);
-		g.drawOval(temp.x, temp.y, 5, 5);
-		
-		if(lastAim != null)
+		g.setColor(Color.black);
+		for(int i = 1; i < 20; i++)
 		{
-			g.setColor(Color.BLACK);
-			g.drawOval(lastAim.x, lastAim.y, 5, 5);
+			g.drawLine(0, 21 * i, 419, 21 * i);
+			g.drawLine(21 * i, 0, 21 * i, 419);
 		}
 		
-		if(hasPatrolled)
+		if(this.isHasPatrolled())
 		{
 			g.setColor(Color.red);
-			g.drawOval(lastHit.x, lastHit.y, 5, 5);
-		}	
+			g.fillRect(21 * lastHit.getCol() + 1, 21 * lastHit.getRow() + 1, 20, 20);
+		}
+		
+		if(this.lastAim != null)
+		{
+			g.setColor(Color.gray);
+			g.fillRect(21 * lastAim.getCol() + 1, 21 * lastAim.getRow() + 1, 20, 20);
+		}
+		
+		if(isTargeting())
+		{
+			g.setColor(Color.GREEN);
+			g.fillRect(21 * temp.getCol() + 1, 21 * temp.getRow() + 1, 20, 20);
+		}
+		
+		if(aim != null)
+		{
+			g.setColor(Color.black);
+			g.fillRect(21 * aim.getCol() + 1, 21 * aim.getRow() + 1, 20, 20);
+		}
 	}
 
 	public void removeLaunchEventListener(AimEventListener listener)

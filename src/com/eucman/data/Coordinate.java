@@ -9,67 +9,67 @@ package com.eucman.data;
  */
 public class Coordinate
 {
-	double _x;
-	double _y;
+	int _col;
+	int _row;
 	
 	public Coordinate()
 	{
-		_x = 0;
-		_y = 0;
+		_col = 0;
+		_row = 0;
 	}
 	
-	public Coordinate(double x, double y)
+	public Coordinate(int row, int col)
 	{
-		_x = x;
-		_y = y;
+		_col = col;
+		_row = row;
 	}
 	
-	public double get_x()
+	public int getCol()
 	{
-		return _x;
+		return _col;
 	}
-	public void set_x(double _x)
+	public void setCol(int _x)
 	{
-		this._x = _x;
+		this._col = _x;
 	}
-	public double get_y()
+	public int getRow()
 	{
-		return _y;
+		return _row;
 	}
-	public void set_y(double _y)
+	public void setRow(int _y)
 	{
-		this._y = _y;
+		this._row = _y;
 	}
 	
-	public void setTo(double x, double y)
+	public void setTo(int x, int y)
 	{
-		_x = x;
-		_y = y;
+		_col = x;
+		_row = y;
 	}
 	
 	public void setTo(Coordinate other)
 	{
-		this._x = other._x;
-		this._y = other._y;
+		this._col = other._col;
+		this._row = other._row;
 	}
 	
 	public Coordinate add(Coordinate other)
 	{
-		return new Coordinate(this._x + other._x, this._y + other._y);
+		return new Coordinate(this._col + other._col, this._row + other._row);
 	}
 	
 	public Coordinate subtract(Coordinate other)
 	{
-		return new Coordinate(this._x - other._x, this._y - other._y);
+		return new Coordinate(this._col - other._col, this._row - other._row);
 	}
 	
 	public double distanceTo(Coordinate other)
 	{
-		return Math.sqrt(Math.pow(_x - other._x, 2.0) + Math.pow(_y - other._y, 2.0));
+		return Math.sqrt(Math.pow(_col - other._col, 2.0) + Math.pow(_row - other._row, 2.0));
 	}
 	
 	public String toString()
 	{
-		return String.format("(%2.2f, %2.2f)", _x, _y);
+		return String.format("(%d, %d)", _col, _row);
 	}
 }
