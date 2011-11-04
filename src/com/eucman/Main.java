@@ -5,12 +5,14 @@ package com.eucman;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Random;
 import java.util.Vector;
 
+import javax.swing.BoxLayout;
 import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -70,10 +72,10 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		
 		mainPanel = new JPanel();
 		mainPanel.setSize(420, 460);
-		mainPanel.setLayout(new BorderLayout());
-		
+		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		
 		aimCanvas = new AimCanvas();
+		aimCanvas.setPreferredSize(new Dimension(420, 420));
 		aimCanvas.addLaunchEventLisneter(this);
 		mainPanel.add(aimCanvas, BorderLayout.CENTER);
 		
@@ -125,6 +127,7 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		this.add(mainPanel, BorderLayout.CENTER);
 		this.add(leftPanel, BorderLayout.EAST);
 		this.setSize(620, 480);
+		
 		
 		this.setVisible(true);
 	}
