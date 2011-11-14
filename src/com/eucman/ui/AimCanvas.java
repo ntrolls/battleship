@@ -30,7 +30,7 @@ public class AimCanvas extends Canvas implements MouseMotionListener, MouseListe
 	private static final long serialVersionUID = 1L;
 	private ArrayList<AimEventListener> _listeners = new ArrayList<AimEventListener>();
 
-	private ImageIcon mi = new ImageIcon(this.getClass().getResource("missile.png"));
+	private ImageIcon mi = new ImageIcon(this.getClass().getResource("images/missile.png"));
 	private Missile missile = null;
 	private boolean animationOn = false;
 	private Timer timer = null;
