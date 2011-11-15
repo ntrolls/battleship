@@ -6,6 +6,8 @@ package com.eucman;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -50,6 +52,7 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 	private JTextPane messageView;
 
 	private Random rand = new Random();
+	Font countFont = new Font("Dialog", Font.PLAIN, 18);
 
 	private Coordinate old = new Coordinate();
 	private Coordinate current = new Coordinate();
@@ -65,6 +68,7 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 	private Vector<Coordinate> aims = new Vector<Coordinate>();
 	private Vector<Coordinate> errors = new Vector<Coordinate>();
 	private int maxMissiles;
+	private JLabel remaining;
 
 	public void init()
 	{
@@ -84,8 +88,10 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		scorePanel.setLayout(new GridLayout(1, 2));
 
 		scoreLabel = new JLabel(String.format("Score: %d/100", currentScore));
+		scoreLabel.setFont(countFont);
 		scorePanel.add(scoreLabel);
 		totalLabel = new JLabel(String.format("Total: %d", totalScore));
+		totalLabel.setFont(countFont);
 		scorePanel.add(totalLabel);
 
 		mainPanel.add(scorePanel, BorderLayout.SOUTH);
@@ -96,14 +102,18 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		mainPanel.add(messageView, BorderLayout.SOUTH);
 
 		leftPanel = new JPanel();
-		leftPanel.setLayout(new GridLayout(7, 1));
+		leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
 
-		leftPanel.add(new JLabel("Missile Remaining"));
-
+		remaining = new JLabel("Missiles Remaining");
+		remaining.setFont(countFont);
+		leftPanel.add(remaining);
+		
 		maxMissiles = Integer.parseInt(this.getParameter("missiles"));
 		missilesRemaining = maxMissiles;
 		missileLabel = new JLabel();
+		missileLabel.setFont(countFont);
 		missileLabel.setHorizontalAlignment(JLabel.RIGHT);
+		
 		leftPanel.add(missileLabel);
 
 		coordinateLabel = new JLabel();
