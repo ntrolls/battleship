@@ -13,6 +13,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
+import java.awt.image.RescaleOp;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -30,7 +32,8 @@ public class AimCanvas extends Canvas implements MouseMotionListener, MouseListe
 	private static final long serialVersionUID = 1L;
 	private ArrayList<AimEventListener> _listeners = new ArrayList<AimEventListener>();
 
-	private ImageIcon mi = new ImageIcon(this.getClass().getResource("images/missile.png"));
+	private ImageIcon mIcon = new ImageIcon(this.getClass().getResource("images/missile.png"));
+	private BufferedImage missileBI = null;
 	private Missile missile = null;
 	private boolean animationOn = false;
 	private Timer timer = null;
@@ -39,6 +42,7 @@ public class AimCanvas extends Canvas implements MouseMotionListener, MouseListe
 	public Coordinate lastAim = new Coordinate(-1, -1);
 	public Coordinate lastHit = new Coordinate(-1, -1);
 	public Coordinate temp = new Coordinate(-100, -100);
+	public Coordinate patrolAreaTopLeft = new Coordinate(-1, -1);
 
 	private boolean isTargeting = false;
 	private boolean hasPatrolled = false;
@@ -46,6 +50,10 @@ public class AimCanvas extends Canvas implements MouseMotionListener, MouseListe
 	public AimCanvas()
 	{
 		super();
+
+		missileBI = new BufferedImage(mIcon.getIconWidth(), mIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics g = missileBI.getGraphics();
+		g.drawImage(mIcon.getImage(), 0, 0, null);
 
 		setSize(420, 420);
 		this.setPreferredSize(new Dimension(420, 420));
@@ -156,8 +164,14 @@ public class AimCanvas extends Canvas implements MouseMotionListener, MouseListe
 
 		if (isAnimationOn())
 		{
+			/* Create a rescale filter op that makes the image 50% opaque */
+			float[] scales = {1f, 1f, 1f, 1f - 0.1f * (float) missile.position.getCol()};
+			float[] offsets = new float[4];
+			RescaleOp rop = new RescaleOp(scales, offsets, null);
+
+			/* Draw the image, applying the filter */
 			Graphics2D g2d = (Graphics2D) g;
-			g2d.drawImage(mi.getImage(), missile.position.getCol() * 21, missile.position.getRow() * 21, this);
+			g2d.drawImage(missileBI, rop, missile.position.getCol() * 21, missile.position.getRow() * 21);
 		}
 
 		for (int i = 1; i < 20; i++)
@@ -169,7 +183,9 @@ public class AimCanvas extends Canvas implements MouseMotionListener, MouseListe
 		if (this.isHasPatrolled())
 		{
 			g.setColor(Color.red);
-			g.fillRect(21 * lastHit.getCol() + 1, 21 * lastHit.getRow() + 1, 20, 20);
+			for (int i = 0; i < 4; i++)
+				for (int j = 0; j < 4; j++)
+					g.fillRect(21 * (patrolAreaTopLeft.getCol() + i) + 1, 21 * (patrolAreaTopLeft.getRow() + j) + 1, 20, 20);
 		}
 
 		if (this.lastAim != null)
@@ -213,22 +229,28 @@ public class AimCanvas extends Canvas implements MouseMotionListener, MouseListe
 
 	public void startAnimation()
 	{
-		Coordinate start = new Coordinate(aim.getRow(), 0);
+		Coordinate start = new Coordinate(19, 0);
 		missile = new Missile(start);
 		timer = new Timer(50, this);
+		timer.setActionCommand("animation");
 		setAnimationOn(true);
 		timer.start();
 	}
 	@Override
-	public void actionPerformed(ActionEvent arg0)
+	public void actionPerformed(ActionEvent action)
 	{
-		missile.move(Missile.RIGHT);
-		repaint();
-		if (missile.position.equals(aim))
+		if (action.getActionCommand().equals("animation"))
 		{
-			setAnimationOn(false);
-			timer.stop();
-			aim = null;
+			missile.move(Missile.RIGHT);
+			missile.move(Missile.UP);
+
+			repaint();
+			if (missile.position.getRow() == 10 && missile.position.getCol() == 9)
+			{
+				setAnimationOn(false);
+				this.timer.stop();
+				aim = null;
+			}
 		}
 	}
 }

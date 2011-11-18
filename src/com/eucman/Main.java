@@ -4,6 +4,7 @@
 package com.eucman;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -20,6 +21,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
+import javax.swing.Timer;
 
 import com.eucman.data.Coordinate;
 import com.eucman.ui.AimCanvas;
@@ -52,7 +54,8 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 	private JTextPane messageView;
 
 	private Random rand = new Random();
-	Font countFont = new Font("Dialog", Font.PLAIN, 18);
+	Font countFont = new Font("Dialog", Font.PLAIN, 16);
+	Font messageFont = new Font("Dialog", Font.PLAIN, 14);
 
 	private Coordinate old = new Coordinate();
 	private Coordinate current = new Coordinate();
@@ -69,6 +72,11 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 	private Vector<Coordinate> errors = new Vector<Coordinate>();
 	private int maxMissiles;
 	private JLabel remaining;
+	private Coordinate landed;
+	private Random random = new Random();
+	private Timer timer = null;
+	private int blinkCounter = -1;
+	private boolean inLaunch = false;
 
 	public void init()
 	{
@@ -76,7 +84,7 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		this.setLayout(new BorderLayout());
 
 		mainPanel = new JPanel();
-		mainPanel.setSize(420, 660);
+		mainPanel.setSize(420, 720);
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
 		aimCanvas = new AimCanvas();
@@ -85,6 +93,7 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		mainPanel.add(aimCanvas, BorderLayout.CENTER);
 
 		scorePanel = new JPanel();
+		scorePanel.setSize(420, 100);
 		scorePanel.setLayout(new GridLayout(1, 2));
 
 		scoreLabel = new JLabel(String.format("Score: %d/100", currentScore));
@@ -98,52 +107,57 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 
 		messageView = new JTextPane();
 		messageView.setEditable(false);
-		messageView.setPreferredSize(new Dimension(420, 200));
+		messageView.setFont(messageFont);
+		messageView.setPreferredSize(new Dimension(420, 300));
 		mainPanel.add(messageView, BorderLayout.SOUTH);
 
 		leftPanel = new JPanel();
-		leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+		leftPanel.setPreferredSize(new Dimension(220, 550));
+		leftPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 
 		remaining = new JLabel("Missiles Remaining");
 		remaining.setFont(countFont);
 		leftPanel.add(remaining);
-		
+
 		maxMissiles = Integer.parseInt(this.getParameter("missiles"));
 		missilesRemaining = maxMissiles;
 		missileLabel = new JLabel();
 		missileLabel.setFont(countFont);
 		missileLabel.setHorizontalAlignment(JLabel.RIGHT);
-		
 		leftPanel.add(missileLabel);
 
 		coordinateLabel = new JLabel();
 		leftPanel.add(coordinateLabel);
 
+		Dimension buttonSize = new Dimension(200, 50);
 		newCoordinateButton = new JButton("New Coordinate");
+		newCoordinateButton.setPreferredSize(buttonSize);
 		newCoordinateButton.setActionCommand("new");
 		newCoordinateButton.addActionListener(this);
 		leftPanel.add(newCoordinateButton);
 
 		keepCoordinateButton = new JButton("Keep Coordinate");
+		keepCoordinateButton.setPreferredSize(buttonSize);
 		keepCoordinateButton.setActionCommand("keep");
 		keepCoordinateButton.addActionListener(this);
 		leftPanel.add(keepCoordinateButton);
 
 		launchButton = new JButton("Order Launch");
+		launchButton.setPreferredSize(buttonSize);
 		launchButton.setActionCommand("launch");
 		launchButton.addActionListener(this);
 		launchButton.setEnabled(false);
 		leftPanel.add(launchButton);
 
 		patrolButton = new JButton("Order Patrol");
+		patrolButton.setPreferredSize(buttonSize);
 		patrolButton.setActionCommand("patrol");
 		patrolButton.addActionListener(this);
 		leftPanel.add(patrolButton);
 
 		this.add(mainPanel, BorderLayout.CENTER);
 		this.add(leftPanel, BorderLayout.EAST);
-		this.setSize(650, 480);
-
+		this.setSize(635, 550);
 		this.setVisible(true);
 	}
 	public void start()
@@ -166,7 +180,6 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 
 	private void updateDisplay()
 	{
-		//		coordinateLabel.setText(String.format("X:%.02f Y:%.02f", current.get_x(), current.get_y()));
 		scoreLabel.setText(String.format("Score: %d/100", currentScore));
 		totalLabel.setText(String.format("Total: %d", totalScore));
 		missileLabel.setText(String.format("%d/%d", missilesRemaining, maxMissiles));;
@@ -176,6 +189,14 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 	{
 		messageView.setText(message);
 		java.awt.Toolkit.getDefaultToolkit().beep();
+
+		if (blinkCounter < 0)
+		{
+			blinkCounter = 0;
+			timer = new Timer(100, this);
+			timer.setActionCommand("blink");
+			timer.start();
+		}
 	}
 
 	/*
@@ -187,17 +208,48 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 	@Override
 	public void actionPerformed(ActionEvent action)
 	{
+		if (action.getActionCommand().equals("blink"))
+		{
+			blinkCounter++;
+
+			if (blinkCounter % 2 != 0)
+			{
+				messageView.setBackground(Color.red);
+				messageView.setForeground(Color.white);
+			}
+			else
+			{
+				messageView.setBackground(Color.white);
+				messageView.setForeground(Color.black);
+			}
+
+			if (blinkCounter == 4)
+			{
+				this.timer.stop();
+				blinkCounter = -1;
+				if (inLaunch)
+				{
+					inLaunch = false;
+					launchMissile();
+				}
+
+			}
+		}
+
 		if (action.getActionCommand().equals("new"))
 		{
 			aimCanvas.setTargeting(true);
 			newCoordinateButton.setEnabled(false);
-
 			setMessage("Operator: Choose the target location");
 		}
 		else if (action.getActionCommand().equals("launch"))
 		{
+			inLaunch = true;
 			setMessage("Operator: Firing missile, sir");
-			launchMisile();
+
+			// start animation
+			aimCanvas.startAnimation();
+
 		}
 		else if (action.getActionCommand().equals("keep"))
 		{
@@ -224,16 +276,19 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 			rf.setVisible(true);
 		}
 	}
-
 	private void patrol()
 	{
 		// process patrol
 		setMessage("Operator: Sending out patrol ship to locate the missie landing position");
 
+		Coordinate shift = new Coordinate(-random.nextInt(4), -random.nextInt(4));
+		aimCanvas.patrolAreaTopLeft = landed.add(shift);
+		aimCanvas.patrolAreaTopLeft.fixRange(15, 15);
+
 		aimCanvas.setHasPatrolled(true);
 		aimCanvas.repaint();
 
-		setMessage("Operator: We located the landing position but the patrol ship was sunk by the enemy");
+		setMessage("Operator: We narrowed down the landing position into the 4x4 area but the patrol ship was sunk by the enemy.");
 
 		// disable patrol button
 		patrolButton.setEnabled(false);
@@ -242,8 +297,7 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		totalScore -= 10;
 		updateDisplay();
 	}
-
-	private void launchMisile()
+	private void launchMissile()
 	{
 		// disable launch button
 		launchButton.setEnabled(false);
@@ -256,7 +310,9 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 
 		// process launch
 		Coordinate error = new Coordinate((int) (mean + sd * rand.nextGaussian()), (int) (mean + sd * rand.nextGaussian()));
-		Coordinate landed = current.add(error);
+		landed = current.add(error);
+		landed.fixRange(19, 19);
+
 		this.aims.add(current);
 		this.errors.add(error);
 
@@ -267,9 +323,6 @@ public class Main extends JApplet implements ActionListener, AimEventListener
 		aimCanvas.repaint();
 
 		missilesRemaining -= 1;
-
-		// start animation
-		aimCanvas.startAnimation();
 
 		// calculate score
 		currentScore = calculateScore(enemy, landed);

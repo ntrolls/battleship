@@ -77,4 +77,17 @@ public class Coordinate
 	{
 		return String.format("(%d, %d)", _col, _row);
 	}
+
+	public void fixRange(int width, int height)
+	{
+		// if the actual landing coordiate is out of the grid, bring it back by flipping the sign
+		if (getCol() < 0)
+			setCol(-getCol());
+		if (getCol() > width)
+			setCol(width - (getCol() - width));
+		if (getRow() < 0)
+			setRow(-getRow());
+		if (getRow() > height)
+			setRow(height - (getRow() - height));
+	}
 }
